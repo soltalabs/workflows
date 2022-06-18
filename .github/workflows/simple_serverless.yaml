@@ -1,0 +1,147 @@
+
+name: Simple Serverless workflow
+
+on:
+  workflow_call:
+    inputs:
+      AWS_REGION:
+        description: 'AWS Region the workflow to be deployed in'
+        type: string
+        default: 'ap-southeast-2'
+      AWS_DEFAULT_OUTPUT:
+        description: 'Default output for AWS call'
+        type: string
+        default: 'json'
+      PROD_APPROVERS:
+        description: 'Separated comma list of github approvers'
+        required: true
+        type: string
+      MIN_NUM_APPROVERS:
+        description: 'Number of minium approvers required for PROD deployment'
+        required: true
+        type: number
+        default: 1
+
+    secrets:
+      SHARED_ACTIONS_SSH_KEY:
+        required: true
+      CODEARTIFACT_AWS_ACCESS_KEY_ID:
+        description: 'AWS Access Key Id for CodeArtifact package retriever'
+        required: true
+      CODEARTIFACT_AWS_ACCESS_KEY_SECRET:
+        description: 'AWS Access Key Secret for CodeArtifact package retriever'
+        required: true
+      DEV_AWS_ACCESS_KEY_ID:
+        description: 'AWS Access Key Id for DEV environment'
+        required: true
+      DEV_AWS_ACCESS_KEY_SECRET:
+        description: 'AWS Access Key Secret for DEV environment'
+        required: true
+      SANDBOX_AWS_ACCESS_KEY_ID:
+        description: 'AWS Access Key Id for SANDBOX environment'
+        required: true
+      SANDBOX_AWS_ACCESS_KEY_SECRET:
+        description: 'AWS Access Key Secret for SANDBOX environment'
+        required: true
+      PROD_AWS_ACCESS_KEY_ID:
+        description: 'AWS Access Key Id for PROD environment'
+        required: true
+      PROD_AWS_SECRET_ACCESS_KEY:
+        description: 'AWS Access Key Secret for PROD environment'
+        required: true
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+      - name: Checkout shared actions
+        uses: actions/checkout@v3
+        with:
+          ssh-key: ${{ secrets.SHARED_ACTIONS_SSH_KEY }}
+          ref: v1.1
+          repository: soltalabs/actions
+          path: ./.github/actions/solta
+      - name: Configure CodeArtifact packages access
+        uses: ./.github/actions/solta/packages-access
+        with:
+          aws-access-key-id: ${{ secrets.CODEARTIFACT_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.CODEARTIFACT_AWS_ACCESS_KEY_SECRET }}
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14
+      - name: Install dependencies
+        uses: ./.github/actions/solta/install-from-cache
+        with:
+          codeartifact-auth-token: ${{ env.CODEARTIFACT_AUTH_TOKEN }}
+      - name: Build
+        run: |
+          yarn build
+      - uses: actions/cache@v3
+        id: restore-build
+        with:
+          path: ./*
+          key: ${{ github.sha }}
+
+  deploy-dev:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/cache@v3
+        id: restore-build
+        with:
+          path: ./*
+          key: ${{ github.sha }}
+      - name: Deploy to AWS DEV
+        uses: serverless/github-action@v3.1.0
+        with:
+          args: deploy --stage dev
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.DEV_AWS_ACCESS_KEY_SECRET }}
+          AWS_REGION: ${{ inputs.AWS_REGION }}
+
+  deploy-sandbox:
+    runs-on: ubuntu-latest
+    needs: deploy-dev
+    steps:
+      - uses: actions/cache@v3
+        id: restore-build
+        with:
+          path: ./*
+          key: ${{ github.sha }}
+      - name: Deploy to AWS SANDBOX
+        uses: serverless/github-action@v3.1.0
+        with:
+          args: deploy --stage sandbox
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.SANDBOX_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.SANDBOX_AWS_ACCESS_KEY_SECRET }}
+          AWS_REGION: ${{ inputs.AWS_REGION }}
+
+  deploy-prod:
+    runs-on: ubuntu-latest
+    needs: deploy-sandbox
+    steps:
+      - uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.token }}
+          approvers: ${{ inputs.PROD_APPROVERS}}
+          minimum-approvals: ${{ inputs.MIN_NUM_APPROVERS }}
+          issue-title: "Deploying ${{ github.repository }} to PROD"
+      - uses: actions/cache@v3
+        id: restore-build
+        with:
+          path: ./*
+          key: ${{ github.sha }}
+      - name: Deploy to AWS PROD
+        uses: serverless/github-action@v3.1.0
+        with:
+          args: deploy --stage prod
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.PROD_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.PROD_AWS_ACCESS_KEY_SECRET }}
+          AWS_REGION: ${{ env.AWS_REGION }}
