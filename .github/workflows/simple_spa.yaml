@@ -70,7 +70,7 @@ on:
       PROD_AWS_ACCESS_KEY_ID:
         description: 'AWS Access Key Id for PROD environment'
         required: true
-      PROD_AWS_SECRET_ACCESS_KEY:
+      PROD_AWS_ACCESS_KEY_SECRET:
         description: 'AWS Access Key Secret for PROD environment'
         required: true
       GITHUB_PACKAGE_ACCESS_TOKEN:
@@ -103,7 +103,7 @@ jobs:
         uses: ./.github/actions/solta/install-from-cache
         with:
           codeartifact-auth-token: ${{ env.CODEARTIFACT_AUTH_TOKEN }}
-          node-auth-token: ${{ secrets.GITHUB_PACKAGE_ACCESS_TOKEN }}
+          npm-token: ${{ secrets.GITHUB_PACKAGE_ACCESS_TOKEN }}
       - uses: actions/cache@v3
         id: restore-build
         with:
@@ -197,7 +197,7 @@ jobs:
           aws s3 sync build/ s3://$S3_BUCKET --delete
           aws cloudfront create-invalidation --distribution-id $CF_DISTRIBUTION_ID --path '/index.html'
         env:
-          S3_BUCKET: ${{ inputs.SANDBOX_S3_SPA }}
-          CF_DISTRIBUTION_ID: ${{ inputs.SANDBOX_CF_DISTRIBUTION_ID }}
+          S3_BUCKET: ${{ inputs.PROD_S3_SPA }}
+          CF_DISTRIBUTION_ID: ${{ inputs.PROD_CF_DISTRIBUTION_ID }}
 
 

@@ -50,7 +50,8 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/solta/install-from-cache
         with:
-          node-auth-token: ${{ secrets.GITHUB_PACKAGE_ACCESS_TOKEN }}
+          codeartifact-auth-token: ${{ env.CODEARTIFACT_AUTH_TOKEN }}
+          npm-token: ${{ secrets.GITHUB_PACKAGE_ACCESS_TOKEN }}
 
       - name: Run tests
         run: |
