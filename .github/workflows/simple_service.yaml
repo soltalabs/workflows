@@ -3,6 +3,9 @@ name: Simple service deployment (ECR)
 on:
   workflow_call:
     inputs:
+      APP_NAME:
+        description: 'The app name'
+        required: true
       ECR_NAME:
         description: 'The repository name (ECR)'
         required: true
@@ -90,6 +93,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.DEV_AWS_ACCESS_KEY_SECRET}}
+          app-name: ${{ inputs.APP_NAME }}
           ecr-name: ${{ inputs.ECR_NAME}}
           ecs-cluster-name: dev-${{ inputs.ECS_CLUSTER_NAME }}
           ecs-service-name: ${{ inputs.ECS_SERVICE_NAME }}
@@ -111,6 +115,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.SANDBOX_AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.SANDBOX_AWS_ACCESS_KEY_SECRET}}
+          app-name: ${{ inputs.APP_NAME }}
           ecr-name: ${{ inputs.ECR_NAME}}
           ecs-cluster-name: sandbox-${{ inputs.ECS_CLUSTER_NAME }}
           ecs-service-name: ${{ inputs.ECS_SERVICE_NAME }}
