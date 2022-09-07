@@ -6,6 +6,7 @@ on:
       APP_NAME:
         description: 'The app name'
         required: true
+        type: string
       ECR_NAME:
         description: 'The repository name (ECR)'
         required: true
