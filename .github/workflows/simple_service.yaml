@@ -43,12 +43,6 @@ on:
       DEV_AWS_ACCESS_KEY_SECRET:
         description: 'AWS Access Key Secret for DEV environment'
         required: true
-      SANDBOX_AWS_ACCESS_KEY_ID:
-        description: 'AWS Access Key Id for SANDBOX environment'
-        required: true
-      SANDBOX_AWS_ACCESS_KEY_SECRET:
-        description: 'AWS Access Key Secret for SANDBOX environment'
-        required: true
       GITHUB_PACKAGE_ACCESS_TOKEN:
         required: true
 jobs:
@@ -97,27 +91,5 @@ jobs:
           app-name: ${{ inputs.APP_NAME }}
           ecr-name: ${{ inputs.ECR_NAME}}
           ecs-cluster-name: dev-${{ inputs.ECS_CLUSTER_NAME }}
-          ecs-service-name: ${{ inputs.ECS_SERVICE_NAME }}
-          wait-for-service-stability: false
-
-  deploy-sandbox:
-    runs-on: ubuntu-latest
-    needs: deploy-dev
-    steps:
-      - name: Checkout shared actions
-        uses: actions/checkout@v3
-        with:
-          ssh-key: ${{ secrets.SHARED_ACTIONS_SSH_KEY }}
-          ref: v1.1
-          repository: soltalabs/actions
-          path: ./.github/actions/solta
-      - name: Deploy to ECS
-        uses: ./.github/actions/solta/deploy-ecs
-        with:
-          aws-access-key-id: ${{ secrets.SANDBOX_AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.SANDBOX_AWS_ACCESS_KEY_SECRET}}
-          app-name: ${{ inputs.APP_NAME }}
-          ecr-name: ${{ inputs.ECR_NAME}}
-          ecs-cluster-name: sandbox-${{ inputs.ECS_CLUSTER_NAME }}
           ecs-service-name: ${{ inputs.ECS_SERVICE_NAME }}
           wait-for-service-stability: false
