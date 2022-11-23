@@ -44,12 +44,6 @@ on:
       DEV_AWS_ACCESS_KEY_SECRET:
         description: 'AWS Access Key Secret for DEV environment'
         required: true
-      SANDBOX_AWS_ACCESS_KEY_ID:
-        description: 'AWS Access Key Id for SANDBOX environment'
-        required: true
-      SANDBOX_AWS_ACCESS_KEY_SECRET:
-        description: 'AWS Access Key Secret for SANDBOX environment'
-        required: true
       GITHUB_PACKAGE_ACCESS_TOKEN:
         description: 'Github package access token for @soltalabs package'
         required: true
@@ -128,44 +122,4 @@ jobs:
           S3_BUCKET: ${{ inputs.DEV_S3_SPA }}
           CF_DISTRIBUTION_ID: ${{ inputs.DEV_CF_DISTRIBUTION_ID }}
 
-  deploy-sandbox:
-    runs-on: ubuntu-latest
-    needs: deploy-dev
-    steps:
-      - name: Checkout shared actions
-        uses: actions/checkout@v3
-        with:
-          ssh-key: ${{ secrets.SHARED_ACTIONS_SSH_KEY }}
-          ref: v1.1
-          repository: soltalabs/actions
-          path: ./.github/actions/solta
-      - name: Configure CodeArtifact packages access
-        uses: ./.github/actions/solta/packages-access
-        with:
-          aws-access-key-id: ${{ secrets.CODEARTIFACT_AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.CODEARTIFACT_AWS_ACCESS_KEY_SECRET }}
-      - uses: actions/cache@v3
-        id: restore-build
-        with:
-          path: ./*
-          key: ${{ github.sha }}
-      - name: Build
-        run: |
-          yarn build:sandbox
-        env:
-          CODEARTIFACT_AUTH_TOKEN: ${{ env.CODEARTIFACT_AUTH_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_PACKAGE_ACCESS_TOKEN }}
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.SANDBOX_AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.SANDBOX_AWS_ACCESS_KEY_SECRET }}
-          aws-region: ${{ inputs.AWS_REGION }}
-      - name: Deploy to S3
-        run: |
-          aws s3 sync build/ s3://$S3_BUCKET --delete
-          aws cloudfront create-invalidation --distribution-id $CF_DISTRIBUTION_ID --path '/index.html'
-        env:
-          S3_BUCKET: ${{ inputs.SANDBOX_S3_SPA }}
-          CF_DISTRIBUTION_ID: ${{ inputs.SANDBOX_CF_DISTRIBUTION_ID }}
-
+  
