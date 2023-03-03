@@ -94,6 +94,10 @@ jobs:
         with:
           path: ./*
           key: ${{ github.sha }}
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
       - name: Build
         run: |
           yarn build:dev
@@ -113,5 +117,3 @@ jobs:
         env:
           S3_BUCKET: ${{ inputs.DEV_S3_SPA }}
           CF_DISTRIBUTION_ID: ${{ inputs.DEV_CF_DISTRIBUTION_ID }}
-
-  
