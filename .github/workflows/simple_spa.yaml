@@ -20,14 +20,6 @@ on:
         description: 'CF Distribution ID for DEV environment'
         required: true
         type: string
-      SANDBOX_S3_SPA:
-        description: 'S3 Bucket for SANDBOX environment'
-        required: true
-        type: string
-      SANDBOX_CF_DISTRIBUTION_ID:
-        description: 'CF Distribution ID for SANDBOX environment'
-        required: true
-        type: string
 
     secrets:
       SHARED_ACTIONS_SSH_KEY:
