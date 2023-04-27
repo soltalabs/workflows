@@ -32,7 +32,7 @@ jobs:
         with:
           ssh-key: ${{ secrets.SHARED_ACTIONS_SSH_KEY }}
           repository: soltalabs/actions
-          ref: v1.1
+          ref: v1.2
           path: ./.github/actions/solta
 
       - name: Configure CodeArtifact packages access
