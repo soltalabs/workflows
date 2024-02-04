@@ -3,36 +3,40 @@ name: Simple PR Builder Workflow
 on:
   workflow_call:
     inputs:
-      TEST_COMMAND:
-        description: 'Extra commands to execute as part of test steps'
+      NODE_VERSION:
+        description: "Node.js version"
         type: string
-        default: ''
+        default: "16"
+      TEST_COMMAND:
+        description: "Extra commands to execute as part of test steps"
+        type: string
+        default: ""
 
     secrets:
       SHARED_ACTIONS_SSH_KEY:
         required: true
       CODEARTIFACT_AWS_ACCESS_KEY_ID:
-        description: 'AWS Access Key Id for CodeArtifact package retriever'
+        description: "AWS Access Key Id for CodeArtifact package retriever"
         required: true
       CODEARTIFACT_AWS_ACCESS_KEY_SECRET:
-        description: 'AWS Access Key Secret for CodeArtifact package retriever'
+        description: "AWS Access Key Secret for CodeArtifact package retriever"
         required: true
       GITHUB_PACKAGE_ACCESS_TOKEN:
-        description: 'Github package access token for @soltalabs package'
+        description: "Github package access token for @soltalabs package"
 
 jobs:
   build-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Checkout shared actions
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ssh-key: ${{ secrets.SHARED_ACTIONS_SSH_KEY }}
           repository: soltalabs/actions
-          ref: v1.2
+          ref: v1.3
           path: ./.github/actions/solta
 
       - name: Configure CodeArtifact packages access
@@ -42,9 +46,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.CODEARTIFACT_AWS_ACCESS_KEY_SECRET }}
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: ${{ inputs.NODE_VERSION }}
 
       - name: Install dependencies
         uses: ./.github/actions/solta/install-from-cache
